@@ -41,7 +41,6 @@ public class Download {
 				getdata();
 				ra.close();
 				con.disconnect();
-				System.out.println("Download success!");
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
