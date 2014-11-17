@@ -12,19 +12,25 @@ import java.net.UnknownHostException;
 public class Download {
 	URL url;
 	File file;
-	int index;
-	byte[] bt;
-	int times;
 	String path;
+	String filename;
+	long filelength;
 	InputStream is;
+	static long times;
 	RandomAccessFile ra;
 	HttpURLConnection con;
+	Thread t1;
+	Get_data gd;
+	Download dl;
+
+	public Download() {
+
+	}
 
 	public Download(HttpURLConnection con, URL url) {
-		times = 0;
 		this.url = url;
 		this.con = con;
-		bt = new byte[1024];
+		dl = new Download();
 		path = "/Users/apple/Desktop/My_Download/";
 		init();
 	}
@@ -35,12 +41,15 @@ public class Download {
 				con = (HttpURLConnection) url.openConnection();
 				con.setDoInput(true);
 				con.connect();
+				System.out.println();
 				is = con.getInputStream();
+				filelength = con.getContentLengthLong();
 				file = new File(path + get_filename(con.toString()));
 				ra = new RandomAccessFile(file, "rw");
-				getdata();
-				ra.close();
-				con.disconnect();
+				System.out.println("START GET DATA");
+				t1 = new Thread(gd = new Get_data(ra, is, times, filelength,
+						file.getName(), path));
+				t1.start();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
@@ -51,19 +60,10 @@ public class Download {
 		}
 	}
 
-	private void getdata() {
-		try {
-			while ((index = is.read(bt, 0, bt.length)) > 0) {
-				ra.write(bt, 0, index);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	private String get_filename(String ori_url) {
 		ori_url = ori_url.replace(
 				"sun.net.www.protocol.http.HttpURLConnection:", "");
-		return ori_url.split("/")[ori_url.split("/").length - 1];
+		filename = ori_url.split("/")[ori_url.split("/").length - 1];
+		return filename;
 	}
 }
