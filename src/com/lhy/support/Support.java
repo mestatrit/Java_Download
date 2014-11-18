@@ -7,32 +7,50 @@ import java.io.RandomAccessFile;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import com.lhy.main.Get_data;
+
 public class Support implements Runnable {
-	long pre;
-	long now;
+	static long pre;
+	static long now;
 	int index;
 	long times;
+	Support s;
 	String path;
 	String data;
-	boolean flag;
+	Get_data gd;
+	static boolean flag;
+	static boolean c_flag;
 	String suffix;
 	FileReader fr;
 	String filename;
 	long filelength;
-	private File file;
+	File file;
+	Save_Info si;
+	Thread t1;
+	Controller ct;
 	RandomAccessFile ra;
 
-	public Support(long filelength, String filename, String path) {
+	public Support(String new_path) {
+		data = "";
+		file = new File(new_path);
+	}
+
+	public Support(long filelength, String filename, String path, Get_data gd,
+			Save_Info si) {
 		try {
 			data = "";
 			times = 0l;
 			flag = true;
+			c_flag = true;
+			this.gd = gd;
 			suffix = ".Lhy";
+			this.si = si;
 			this.path = path;
+			s = new Support(path + filename + suffix);
 			this.filename = filename;
 			this.filelength = filelength;
-			ra = new RandomAccessFile(file, "rw");
 			file = new File(path + filename + suffix);
+			ra = new RandomAccessFile(file, "rw");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -40,6 +58,7 @@ public class Support implements Runnable {
 
 	@Override
 	public void run() {
+		start_controller();
 		while (flag) {
 			get_speed();
 			reset();
@@ -48,11 +67,16 @@ public class Support implements Runnable {
 		}
 	}
 
-	public void set_point(long length) {
+	private void start_controller() {
+		t1 = new Thread(ct = new Controller(gd, s, si, c_flag));
+		t1.start();
+	}
+
+	public void set_point(String str) {
 		try {
 			times++;
 			ra.setLength(0);
-			ra.write(String.valueOf(length).getBytes());
+			ra.write(str.getBytes());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -63,6 +87,13 @@ public class Support implements Runnable {
 	}
 
 	public void del_suffix() {
+		try {
+			ct.set_false();
+			fr.close();
+			ra.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		if (!file.delete())
 			del_suffix();
 	}
@@ -82,6 +113,12 @@ public class Support implements Runnable {
 					+ get_speed_data((((double) now - (double) pre)) / 1024.0));
 	}
 
+	public long exam_speed() {
+		long _data = Long.valueOf(get_length());
+		reset();
+		return _data;
+	}
+
 	private String get_speed_data(double data) {
 		BigDecimal bd = new BigDecimal(data);
 		bd = bd.setScale(2, RoundingMode.HALF_UP);
@@ -96,15 +133,19 @@ public class Support implements Runnable {
 
 	private String get_length() {
 		if (file.exists()) {
+			int size = 0;
 			try {
 				fr = new FileReader(file);
 				while ((index = fr.read()) > 0) {
 					data += (char) index;
 				}
+				size = data.split("\r\n").length - 1;
+				data = data.split("\r\n")[size].trim();
 			} catch (IOException e) {
-				e.printStackTrace();
+				reset();
+				get_length();
 			}
-			if (data.equals("")) {
+			if (data.equals("") || size == 3) {
 				reset();
 				get_length();
 			}

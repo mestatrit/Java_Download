@@ -1,12 +1,10 @@
 package com.lhy.main;
 
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
 public class Start {
 	URL url;
-	HttpURLConnection con;
 
 	Start() {
 		init();
@@ -21,7 +19,7 @@ public class Start {
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
-		new Download(con, url);
+		new Download(url);
 	}
 
 	public static void main(String[] args) {
