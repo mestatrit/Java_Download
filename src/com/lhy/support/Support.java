@@ -145,7 +145,7 @@ public class Support implements Runnable {
 				reset();
 				get_length();
 			}
-			if (data.equals("") || size == 3) {
+			if (data.equals("") || size == 4) {
 				reset();
 				get_length();
 			}

@@ -25,17 +25,19 @@ public class Download {
 	Thread t1;
 	Get_data gd;
 	String suffix;
+	long skip_data;
 
 	public Download() {
 
 	}
 
-	public Download(URL url, long skip_data) {
+	public Download(URL url, long skip_data, long totle) {
 		if (url != null) {
 			this.url = url;
 			path = "/Users/apple/Desktop/My_Download/";
 			suffix = ".Lhy";
-			init(skip_data);
+			this.skip_data = skip_data;
+			init(skip_data, totle);
 		} else
 			System.out.println("网址无效");
 	}
@@ -50,9 +52,9 @@ public class Download {
 			System.out.println("网址无效");
 	}
 
-	private void init(long skip_data) {
+	private void init(long skip_data, long totle) {
 		try {
-			try_to_connect();
+			skip_to_connect(String.valueOf(skip_data), String.valueOf(totle));
 			filelength = con.getContentLengthLong();
 			file = new File(path + get_filename(con.toString()));
 			ra = new RandomAccessFile(file, "rw");
@@ -75,6 +77,7 @@ public class Download {
 				old_file = new File(path + filename + suffix);
 				ra = new RandomAccessFile(file, "rw");
 				if (old_file.exists()) {
+					con.disconnect();
 					int size = 0;
 					int index;
 					String data = "";
@@ -83,7 +86,9 @@ public class Download {
 						data += (char) index;
 					}
 					size = data.split("\r\n").length - 1;
+					String totle_data = data.split("\r\n")[size - 1].trim();
 					data = data.split("\r\n")[size].trim();
+					skip_to_connect(data, totle_data);
 					t1 = new Thread(gd = new Get_data(ra, is, times,
 							filelength, file.getName(), path,
 							Long.valueOf(data), real_url));
@@ -103,6 +108,23 @@ public class Download {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	private void skip_to_connect(String _data, String totle) {
+		try {
+			System.out.println("连接中");
+			con = (HttpURLConnection) url.openConnection();
+			con.setConnectTimeout(5000);
+			con.setReadTimeout(5000);
+			con.setDoInput(true);
+			con.setRequestProperty("Range", "bytes=" + _data + "-" + totle);
+			con.connect();
+			is = con.getInputStream();
+			System.out.println("已连接至资源");
+		} catch (IOException e) {
+			System.out.println("连接超时，正在尝试重新连接");
+			skip_to_connect(_data, totle);
 		}
 	}
 

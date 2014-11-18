@@ -31,7 +31,7 @@ public class Controller implements Runnable {
 				gd.set_false();
 				s.set_flag_false();
 				this.flag = false;
-				new Download(si.get_url(), si.get_data());
+				new Download(si.get_url(), si.get_data(),si.get_length());
 			} else {
 				System.out.println("网络连接监测中: 连接正常");
 			}

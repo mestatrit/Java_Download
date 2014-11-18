@@ -43,7 +43,7 @@ public class Get_data implements Runnable {
 		this.real_url = real_url;
 		this.filename = filename;
 		this.filelength = filelength;
-		si = new Save_Info(real_url, filename, null);
+		si = new Save_Info(real_url, filename, String.valueOf(filelength), null);
 	}
 
 	public Get_data(RandomAccessFile ra, InputStream is, long times,
@@ -61,7 +61,8 @@ public class Get_data implements Runnable {
 		this.filename = filename;
 		this.skip_data = skip_data;
 		this.filelength = filelength;
-		si = new Save_Info(real_url, filename, String.valueOf(skip_data));
+		si = new Save_Info(real_url, filename, String.valueOf(filelength),
+				String.valueOf(skip_data));
 	}
 
 	@Override
@@ -87,7 +88,6 @@ public class Get_data implements Runnable {
 			System.out.println("跳过" + skip_data + "字节后开始下载");
 			t2 = new Thread(s = new Support(filelength, filename, path, gd, si));
 			try {
-				is.skip(skip_data);
 				ra.seek(skip_data);
 				times = skip_data;
 				t2.start();
