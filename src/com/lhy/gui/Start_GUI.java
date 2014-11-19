@@ -3,6 +3,9 @@ package com.lhy.gui;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -10,6 +13,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import com.lhy.main.DownloadStart;
 
 public class Start_GUI {
 	JFrame f1;
@@ -19,6 +27,7 @@ public class Start_GUI {
 	JButton _stop;
 	JButton _offlinedownload;
 	JTable tb;
+	String path;
 	JScrollPane js;
 	String[] Names = { "文件名", "进度", "下载速度", "文件状态" };
 	Object[][] co = new Object[5][4];
@@ -29,26 +38,68 @@ public class Start_GUI {
 		init_jbutton();
 		init_co();
 		init_add();
+		init_exam_exist_file();
 		f1.setVisible(true);
-		//http://w.x.baidu.com/alading/anquan_soft_down_normal/12350
-		//http://w.x.baidu.com/alading/anquan_soft_down_all/25677
+		// http://w.x.baidu.com/alading/anquan_soft_down_normal/12350
+		// http://w.x.baidu.com/alading/anquan_soft_down_all/25677
 		_new.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				for (int i = 0; i < 5; i++) {
 					if (co[i][0] == null) {
-						new New_Download(i, tb,co);
+						new New_Download(i, tb, co);
 						break;
 					}
 				}
 			}
-
 		});
 	}
 
+	private void init_exam_exist_file() {
+		path = "/Users/apple/Desktop/My_Download/";
+		File file = new File(path);
+		File[] _file = file.listFiles();
+		for (int i = 0; i < _file.length; i++) {
+			if (_file[i].isFile()) {
+				if (_file[i].getName().endsWith("Lhy")) {
+					read_file(_file[i]);
+				}
+			}
+		}
+	}
+
+	private void read_file(File file) {
+		int index;
+		String _index = "";
+		FileReader fr;
+		try {
+			try {
+				fr = new FileReader(file);
+				while ((index = fr.read()) > 0) {
+					_index += (char) index;
+				}
+				JSONArray ja;
+				ja = new JSONArray(_index);
+				for (int i = 0; i < 5; i++) {
+					if (co[i][0] == null) {
+						co[i][0] = file.getName();
+						tb.setValueAt(file.getName(), i, 0);
+						new Thread(new DownloadStart((String) ja.get(0), tb, i))
+								.start();
+						break;
+					}
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	private void init_co() {
-		for(int i = 0 ; i < 5 ; i++){
-			for(int j = 0 ; j < 4 ; j++){
+		for (int i = 0; i < 5; i++) {
+			for (int j = 0; j < 4; j++) {
 				co[i][j] = null;
 			}
 		}

@@ -16,6 +16,8 @@ import com.lhy.support.Controller;
 import com.lhy.support.Support;
 
 public class DownloadStart implements Runnable {
+	int _i;
+	JTable tb;
 	File file;
 	Support s;
 	Thread[] t;
@@ -23,18 +25,16 @@ public class DownloadStart implements Runnable {
 	String path;
 	String range;
 	Controller c;
+	JSONArray ja;
+	String suffix;
+	int thread_num;
 	String real_url;
 	String filename;
 	long filelength;
-	int thread_num;
-	String suffix;
-	JSONArray ja;
 	HttpURLConnection con;
-	JTable tb;
-	int i;
 
-	public DownloadStart(String url, JTable tb, int i) {
-		this.i = i;
+	public DownloadStart(String url, JTable tb, int _i) {
+		this._i = _i;
 		this.tb = tb;
 		this.url = url;
 		thread_num = 6;
@@ -98,7 +98,8 @@ public class DownloadStart implements Runnable {
 		s.set_filelength(filelength);
 		t = new Thread[thread_num];
 		if (!file.exists()) {
-			new Thread(c = new Controller(real_url, filename, s, file,tb,i)).start();
+			new Thread(c = new Controller(real_url, filename, s, file, tb, _i))
+					.start();
 			if (range.equals("NO")) {
 				long index = filelength / thread_num;
 				String[] tasks = new String[thread_num];
@@ -118,7 +119,8 @@ public class DownloadStart implements Runnable {
 				}
 			}
 		} else {
-			new Thread(c = new Controller(real_url, filename, s, file,tb,i)).start();
+			new Thread(c = new Controller(real_url, filename, s, file, tb, _i))
+					.start();
 			String json = c.get_json_data();
 			try {
 				ja = new JSONArray(json);
