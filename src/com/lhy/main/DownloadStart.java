@@ -6,6 +6,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import javax.swing.JTable;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,8 +30,12 @@ public class DownloadStart implements Runnable {
 	String suffix;
 	JSONArray ja;
 	HttpURLConnection con;
+	JTable tb;
+	int i;
 
-	public DownloadStart(String url) {
+	public DownloadStart(String url, JTable tb, int i) {
+		this.i = i;
+		this.tb = tb;
 		this.url = url;
 		thread_num = 6;
 		range = "NO";
@@ -92,7 +98,7 @@ public class DownloadStart implements Runnable {
 		s.set_filelength(filelength);
 		t = new Thread[thread_num];
 		if (!file.exists()) {
-			new Thread(c = new Controller(real_url, filename, s, file)).start();
+			new Thread(c = new Controller(real_url, filename, s, file,tb,i)).start();
 			if (range.equals("NO")) {
 				long index = filelength / thread_num;
 				String[] tasks = new String[thread_num];
@@ -112,7 +118,7 @@ public class DownloadStart implements Runnable {
 				}
 			}
 		} else {
-			new Thread(c = new Controller(real_url, filename, s, file)).start();
+			new Thread(c = new Controller(real_url, filename, s, file,tb,i)).start();
 			String json = c.get_json_data();
 			try {
 				ja = new JSONArray(json);
@@ -123,8 +129,6 @@ public class DownloadStart implements Runnable {
 											+ ""), i, s));
 					t[i].setPriority(10);
 					t[i].start();
-					System.out.println("断点下载"+(String) ((JSONObject) ja.get(2)).get(i
-							+ ""));
 				}
 			} catch (JSONException e) {
 				e.printStackTrace();

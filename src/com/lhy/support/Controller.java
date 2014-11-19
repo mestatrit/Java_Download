@@ -7,6 +7,8 @@ import java.io.RandomAccessFile;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import javax.swing.JTable;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -27,10 +29,15 @@ public class Controller implements Runnable {
 	String url;
 	String filename;
 	RandomAccessFile ra;
+	JTable tb;
+	int i;
 
-	public Controller(String url, String filename, Support s, File file) {
+	public Controller(String url, String filename, Support s, File file,
+			JTable tb, int i) {
 		flag = true;
 		this.s = s;
+		this.i = i;
+		this.tb = tb;
 		this.url = url;
 		this.file = file;
 		this.filename = filename;
@@ -48,16 +55,19 @@ public class Controller implements Runnable {
 			sleep(1000);
 			now = s.get_now_packet();
 			cut = pre - now;
-			if(cut > 0){
-			progress = get_progress((((double) s.get_filelength() - (double) now) / (double) s
-					.get_filelength()) * 100);
-			speed = get_speed_data((double) cut / 1024.0);
-			System.out.println(progress + "   " + speed);
-			_write();
-			if (progress.equals("100.00%")) {
-				del_file();
-				break;
-			}
+			if (cut > 0) {
+				progress = get_progress((((double) s.get_filelength() - (double) now) / (double) s
+						.get_filelength()) * 100);
+				speed = get_speed_data((double) cut / 1024.0);
+				tb.setValueAt(progress, i, 1);
+				tb.setValueAt(speed, i, 2);
+				tb.setValueAt("下载中", i, 3);
+				_write();
+				if (progress.equals("100.00%")) {
+					tb.setValueAt("已完成", i, 3);
+					del_file();
+					break;
+				}
 			}
 		}
 		try {
