@@ -11,6 +11,7 @@ import java.net.URL;
 import com.lhy.support.Support;
 
 public class Downloading implements Runnable {
+	int serial;
 	Support s;
 	byte[] bt;
 	String url;
@@ -23,13 +24,14 @@ public class Downloading implements Runnable {
 	HttpURLConnection con;
 
 	public Downloading(String url, String path, String filename, String range,
-			Support s) {
+			int serial, Support s) {
 		bt = new byte[1024];
 		data_pac = 0l;
 		this.s = s;
 		this.url = url;
 		this.path = path;
 		this.range = range;
+		this.serial = serial;
 		this.filename = filename;
 	}
 
@@ -46,7 +48,9 @@ public class Downloading implements Runnable {
 			while ((index = is.read(bt, 0, bt.length)) > 0) {
 				ra.write(bt, 0, index);
 				data_pac += index;
-				s.add_now_packet(index);
+				s.add_now_packet(serial + "-" + data_pac + "-"
+						+ (Long.valueOf(range.split("-")[0]) + data_pac) + "-"
+						+ range.split("-")[1]);
 			}
 			if (data_pac < Long.valueOf(range.split("-")[1])
 					- Long.valueOf(range.split("-")[0])) {

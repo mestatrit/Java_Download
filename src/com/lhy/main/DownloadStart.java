@@ -1,14 +1,20 @@
 package com.lhy.main;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.lhy.support.Controller;
 import com.lhy.support.Support;
 
 public class DownloadStart implements Runnable {
+	File file;
 	Support s;
 	Thread[] t;
 	String url;
@@ -19,6 +25,8 @@ public class DownloadStart implements Runnable {
 	String filename;
 	long filelength;
 	int thread_num;
+	String suffix;
+	JSONArray ja;
 	HttpURLConnection con;
 
 	public DownloadStart(String url) {
@@ -78,51 +86,48 @@ public class DownloadStart implements Runnable {
 	}
 
 	private void assign_tasks() {
-		s = new Support();
+		suffix = ".Lhy";
+		file = new File(path + filename + suffix);
+		s = new Support(thread_num);
 		s.set_filelength(filelength);
-		new Thread(c = new Controller(s)).start();
 		t = new Thread[thread_num];
-		if (range.equals("NO")) {
-			long index = filelength / thread_num;
-			String[] tasks = new String[thread_num];
-			for (int i = 0; i < thread_num; i++) {
-				if (i == 0)
-					tasks[i] = "0-" + index;
-				else if (0 < i && i < thread_num - 1)
-					tasks[i] = index * i + "-" + index * (i + 1);
-				else
-					tasks[i] = index * i + "-" + filelength;
-			}
-			for (int i = 0; i < thread_num; i++) {
-				t[i] = new Thread(new Downloading(real_url, path, filename,
-						tasks[i], s));
-				t[i].setPriority(10);
-				t[i].start();
+		if (!file.exists()) {
+			new Thread(c = new Controller(real_url, filename, s, file)).start();
+			if (range.equals("NO")) {
+				long index = filelength / thread_num;
+				String[] tasks = new String[thread_num];
+				for (int i = 0; i < thread_num; i++) {
+					if (i == 0)
+						tasks[i] = "0-" + index;
+					else if (0 < i && i < thread_num - 1)
+						tasks[i] = index * i + "-" + index * (i + 1);
+					else
+						tasks[i] = index * i + "-" + filelength;
+				}
+				for (int i = 0; i < thread_num; i++) {
+					t[i] = new Thread(new Downloading(real_url, path, filename,
+							tasks[i], i, s));
+					t[i].setPriority(10);
+					t[i].start();
+				}
 			}
 		} else {
-			long index = (Long.valueOf(range.split("-")[1]) - Long
-					.valueOf(range.split("-")[0])) / thread_num;
-			String[] tasks = new String[thread_num];
-			for (int i = 0; i < thread_num; i++) {
-				if (i == 0)
-					tasks[i] = range.split("-")[0] + "-"
-							+ (Long.valueOf(range.split("-")[0]) + index);
-				else if (0 < i && i < thread_num - 1)
-					tasks[i] = (Long.valueOf(range.split("-")[0]) + index * i)
-							+ "-"
-							+ (Long.valueOf(range.split("-")[0]) + index
-									* (i + 1));
-				else
-					tasks[i] = (Long.valueOf(range.split("-")[0]) + index * i)
-							+ "-"
-							+ (Long.valueOf(range.split("-")[0]) + range
-									.split("-")[1]);
-			}
-			for (int i = 0; i < thread_num; i++) {
-				t[i] = new Thread(new Downloading(real_url, path, filename,
-						tasks[i], s));
-				t[i].setPriority(10);
-				t[i].start();
+			new Thread(c = new Controller(real_url, filename, s, file)).start();
+			String json = c.get_json_data();
+			try {
+				ja = new JSONArray(json);
+				for (int i = 0; i < thread_num; i++) {
+					t[i] = new Thread(
+							new Downloading(real_url, path, filename,
+									(String) ((JSONObject) ja.get(2)).get(i
+											+ ""), i, s));
+					t[i].setPriority(10);
+					t[i].start();
+					System.out.println("断点下载"+(String) ((JSONObject) ja.get(2)).get(i
+							+ ""));
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
 			}
 		}
 	}
